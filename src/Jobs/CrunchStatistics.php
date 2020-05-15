@@ -42,7 +42,11 @@ class CrunchStatistics implements ShouldQueue
 
                 $tokens = [];
                 $agent = new Agent($item['server']);
-                $UAParser = Parser::create()->parse($agent->getUserAgent());
+
+                if ($agent->getUserAgent()) {
+                    $UAParser = Parser::create()->parse($agent->getUserAgent());
+                }
+
                 $kind = $agent->isDesktop() ? 'desktop' : ($agent->isTablet() ? 'tablet' : ($agent->isPhone() ? 'phone' : ($agent->isRobot() ? 'robot' : 'unknown')));
 
                 collect($laravelRequest->route()->getCompiled()->getTokens())->map(function ($item) use (&$tokens) {
@@ -61,19 +65,19 @@ class CrunchStatistics implements ShouldQueue
                 $agent = app('rinvex.statistics.agent')->firstOrCreate([
                     'name' => $agent->getUserAgent(),
                     'kind' => $kind,
-                    'family' => $UAParser->ua->family,
-                    'version' => $UAParser->ua->toVersion(),
+                    'family' => (empty($UAParser) ? null : $UAParser->ua->family),
+                    'version' => (empty($UAParser) ? null : $UAParser->ua->toVersion()),
                 ]);
 
                 $device = app('rinvex.statistics.device')->firstOrCreate([
-                    'family' => $UAParser->device->family,
-                    'model' => $UAParser->device->model,
-                    'brand' => $UAParser->device->brand,
+                    'family' => (empty($UAParser) ? null : $UAParser->device->family),
+                    'model' => (empty($UAParser) ? null : $UAParser->device->model),
+                    'brand' => (empty($UAParser) ? null : $UAParser->device->brand),
                 ]);
 
                 $platform = app('rinvex.statistics.platform')->firstOrCreate([
-                    'family' => $UAParser->os->family,
-                    'version' => $UAParser->os->toVersion(),
+                    'family' => (empty($UAParser) ? null : $UAParser->os->family),
+                    'version' => (empty($UAParser) ? null : $UAParser->os->toVersion()),
                 ]);
 
                 $path = app('rinvex.statistics.path')->firstOrCreate([
